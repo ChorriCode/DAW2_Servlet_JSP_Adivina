@@ -1,10 +1,14 @@
 package modelo;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
-import java.time.LocalDate;
-
-public class Intento {
+public class Intento implements Serializable {
 	
-	private LocalDate fechaHora;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private LocalDateTime fechaHora;
 	private int orden;
 	private int numeroJugado;
 	private String mensaje;
@@ -13,11 +17,11 @@ public class Intento {
 		super();
 	}
 
-	public LocalDate getFechaHora() {
+	public LocalDateTime getFechaHora() {
 		return fechaHora;
 	}
 
-	public void setFechaHora(LocalDate fechaHora) {
+	public void setFechaHora(LocalDateTime fechaHora) {
 		this.fechaHora = fechaHora;
 	}
 
