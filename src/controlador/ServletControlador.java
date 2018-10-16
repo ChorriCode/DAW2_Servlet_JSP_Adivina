@@ -34,7 +34,7 @@ public class ServletControlador extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		response.getWriter().append("Served at: ").append(request.getContextPath());
+		doPost(request, response);
 	}
 
 	/**
@@ -44,80 +44,47 @@ public class ServletControlador extends HttpServlet {
 		
 		HttpSession session = request.getSession();
 		String reiniciar = request.getParameter("reiniciar");
-		System.out.println(".equals(reiniciar)    " + "reiniciar".equals(reiniciar));
-		if ("reiniciar".equals(reiniciar)) {
-			System.out.println("request.getParameter(\"reiniciar\")===>>>>> " + request.getParameter("reiniciar"));
-			session.invalidate();
-			//request.getRequestDispatcher("index.jsp").include(request, response);
-			response.setContentType("text/html");
-			response.setCharacterEncoding("utf-8");
-			request.getRequestDispatcher("index.jsp").forward(request, response);
-			System.out.println("espero que esto no se ejecute");
-		}
 		ArrayList<Intento> listaIntentos = (ArrayList<Intento>) session.getAttribute("listaIntentos");
 		String int1 = request.getParameter("intervalo1");
 		String int2 = request.getParameter("intervalo2");
+		String dataInput = request.getParameter("dataInput");
+		String ruta = null;
+		System.out.println(".equals(reiniciar)    " + "reiniciar".equals(reiniciar));
+		
+		switch (dataInput) {
+			case "valida":
+				ruta = validaIntervalo(int1, int2, response, session);
+
+				break;
+			case "aceptar":
+				aceptarNumero(session, request, listaIntentos);
+				ruta = "/jsp/jugar.jsp";
+				break;
+			case "reiniciar":
+				reiniciarPartida(session, response, request);
+				ruta = "/index.jsp";
+				break;
+			default:
+				break;
+		}
+		
+
+		
 		if (session.getAttribute("listaIntentos") == null) {
 			session.setAttribute("visualizo", true);
 			System.out.println("session.getAttribute(\"listaIntentos\") = null");
 			listaIntentos = new ArrayList<Intento>();
 			session.setAttribute("listaIntentos", listaIntentos);
 		}
-		
-		if (request.getParameter("valida") != null) {
-			if (!validaIntervalo(int1, int2, response)) {
-				System.out.println("Estoy dentro del intevarlo incorrecto");
-				session.setAttribute("error", "intervalo incorrecto");
-				response.sendRedirect("index.jsp");
-			} else {
-				int numAleatorio = (int) Math.round((Math.random() * (Integer.parseInt(int2)-Integer.parseInt(int1) + Integer.parseInt(int1))));
-				session.setAttribute("numAleatorio", numAleatorio);
-				session.setAttribute("error", "");
-				session.setAttribute("intervalo1", int1);
-				session.setAttribute("intervalo2", int2);
-				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/jsp/jugar.jsp");
-				dispatcher.forward(request,response);
-			}
-			
-		} else {
-			int orden = listaIntentos.size();
-			String num = request.getParameter("numero");
-			System.out.println("numero: " + num);
-			int intervaloMin = Integer.parseInt((String) session.getAttribute("intervalo1"));
-			int intervaloMax = Integer.parseInt((String) session.getAttribute("intervalo2"));
-			System.out.println("intervaloMin: " + intervaloMin + "   intervaloMax: " + intervaloMax);
-			if (validaNumero(num, intervaloMin, intervaloMax )) {
-				int numero = Integer.parseInt(request.getParameter("numero"));
-				Intento unIntento = new Intento();
-				System.out.println("unIntento: " + unIntento);	
-				unIntento.setFechaHora(LocalDateTime.now());
-				unIntento.setNumeroJugado(numero);
-				unIntento.setOrden(++orden);				
-				System.out.println("unIntento.getNumeroJugado(): " + unIntento.getNumeroJugado());
-				String mensaje = aciertoFallo(unIntento, session);
-				unIntento.setMensaje(mensaje);			
-				listaIntentos.add(unIntento);
-				System.out.println("listaIntentos: " + listaIntentos);
-				for (Intento intento : listaIntentos) {
-					System.out.println("numeros: " + intento.getNumeroJugado() + " - lenght: " + listaIntentos.size());
-				}
-				
-				//session.setAttribute("listaIntentos", listaIntentos);
-				//System.out.println("------------------");
-				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/jsp/jugar.jsp");
-				dispatcher.forward(request,response);
-				
-			} else {
-				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/jsp/jugar.jsp");
-				dispatcher.forward(request,response);
-			}
-
-		}
+		System.out.println("ruta: " + ruta);
+		RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(ruta);
+		dispatcher.forward(request,response);
+		System.out.println("request.getParameter(\"dataInput\"): " + request.getParameter("dataInput"));
 		
 		
 	}
 	
-	public boolean validaIntervalo(String int1, String int2, HttpServletResponse response) {
+	public String validaIntervalo(String int1, String int2, HttpServletResponse response, HttpSession session) {
 		
 		try {
 			int num1 = Integer.parseInt(int1);
@@ -125,16 +92,23 @@ public class ServletControlador extends HttpServlet {
 			System.out.println("num1: " + num1 + " - num2: " + num2);
 			if (num1 > num2 || num1 == num2) {
 				System.out.println("Estoy dentro de validaIntervalo IF");
-				return false;
+				session.setAttribute("error", "intervalo incorrecto");
+				return "/index.jsp";
 			}
 
 		} catch (NumberFormatException e) {
 	
 				System.out.println("Estoy dentro de validaIntervalo catch");
-				return false;
+				session.setAttribute("error", "intervalo incorrecto");
+				return "index.jsp";
 		}
 		System.out.println("Estoy dentro de validaIntervalo");
-		return true;
+		int numAleatorio = (int) Math.round((Math.random() * (Integer.parseInt(int2)-Integer.parseInt(int1) + Integer.parseInt(int1))));
+		session.setAttribute("numAleatorio", numAleatorio);
+		session.setAttribute("error", "");
+		session.setAttribute("intervalo1", int1);
+		session.setAttribute("intervalo2", int2);
+		return "/jsp/jugar.jsp";
 	}
 
 	public boolean validaNumero(String numero, int intervaloMin, int intervaloMax) {		
@@ -150,6 +124,36 @@ public class ServletControlador extends HttpServlet {
 		return false;		
 	}
 	
+	public void aceptarNumero(HttpSession session, HttpServletRequest request, ArrayList<Intento> listaIntentos) {
+		int orden = listaIntentos.size();
+		String num = request.getParameter("numero");
+		System.out.println("numero: " + num);
+		int intervaloMin = Integer.parseInt((String) session.getAttribute("intervalo1"));
+		int intervaloMax = Integer.parseInt((String) session.getAttribute("intervalo2"));
+		System.out.println("intervaloMin: " + intervaloMin + "   intervaloMax: " + intervaloMax);
+		if (validaNumero(num, intervaloMin, intervaloMax )) {
+			addNumero(request, listaIntentos, session, orden);
+		}
+	}
+	
+	public void addNumero(HttpServletRequest request, ArrayList<Intento> listaIntentos, HttpSession session, int orden ) {
+		
+		int numero = Integer.parseInt(request.getParameter("numero"));
+		Intento unIntento = new Intento();
+		System.out.println("unIntento: " + unIntento);	
+		unIntento.setFechaHora(LocalDateTime.now());
+		unIntento.setNumeroJugado(numero);
+		unIntento.setOrden(++orden);				
+		System.out.println("unIntento.getNumeroJugado(): " + unIntento.getNumeroJugado());
+		String mensaje = aciertoFallo(unIntento, session);
+		unIntento.setMensaje(mensaje);			
+		listaIntentos.add(unIntento);
+		System.out.println("listaIntentos: " + listaIntentos);
+		for (Intento intento : listaIntentos) {
+			System.out.println("numeros: " + intento.getNumeroJugado() + " - lenght: " + listaIntentos.size());
+		}
+	}
+	
 	public String aciertoFallo(Intento unIntento, HttpSession session) {
 		int numAleatorio = (int) session.getAttribute("numAleatorio");
 		int numeroJugado = unIntento.getNumeroJugado();
@@ -162,5 +166,15 @@ public class ServletControlador extends HttpServlet {
 		session.setAttribute("visualizo", false);
 		return "Lo has Encontrado";
 	
+	}
+	
+	public void reiniciarPartida(HttpSession session, HttpServletResponse response, HttpServletRequest request) throws ServletException, IOException {
+		System.out.println("request.getParameter(\"reiniciar\")===>>>>> " + request.getParameter("reiniciar"));
+		session.invalidate();
+		//request.getRequestDispatcher("index.jsp").include(request, response);
+		response.setContentType("text/html");
+		response.setCharacterEncoding("utf-8");
+		request.getRequestDispatcher("index.jsp").forward(request, response);
+		System.out.println("espero que esto no se ejecute");
 	}
 }

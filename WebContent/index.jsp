@@ -14,7 +14,7 @@
 		<form action="adivina" method="post">
 			Intervalo 1: <input type="number" name="intervalo1" value="1">
 			Intervalo 2: <input type="number" name="intervalo2" value="100">
-      		<input type="submit" name="valida" value="valida">
+      		<input type="submit" name="dataInput" value="valida">
 		</form>
 		<% Object respuesta = session.getAttribute("error") == null ? "" : session.getAttribute("error"); %>
 	<p id="error"><%=respuesta %></p>
